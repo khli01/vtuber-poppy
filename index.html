@@ -124,62 +124,94 @@
     </div>
     <div class="floating" id="floating"></div>
 
-    <script type="module">
-        import * as THREE from 'https://unpkg.com/three@0.161.0/build/three.module.js';
-        import { OrbitControls } from 'https://unpkg.com/three@0.161.0/examples/jsm/controls/OrbitControls.js';
-        import { RoomEnvironment } from 'https://unpkg.com/three@0.161.0/examples/jsm/environments/RoomEnvironment.js';
+    <script>
+        const statusEl = document.createElement('div');
+        statusEl.style.position = 'fixed';
+        statusEl.style.left = '16px';
+        statusEl.style.bottom = '20px';
+        statusEl.style.color = 'rgba(0,229,229,0.8)';
+        statusEl.style.fontSize = '11px';
+        statusEl.style.fontFamily = 'Orbitron, sans-serif';
+        statusEl.style.letterSpacing = '2px';
+        statusEl.textContent = 'LOADING 3D...';
+        document.body.appendChild(statusEl);
 
-        const canvas = document.getElementById('scene');
-        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.outputColorSpace = THREE.SRGBColorSpace;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.35;
-        renderer.setClearColor(0x0b0f1c, 1);
+        async function initScene() {
+            let THREE, OrbitControls, RoomEnvironment;
+            try {
+                const threeMod = await import('https://unpkg.com/three@0.161.0/build/three.module.js');
+                const controlsMod = await import('https://unpkg.com/three@0.161.0/examples/jsm/controls/OrbitControls.js');
+                const envMod = await import('https://unpkg.com/three@0.161.0/examples/jsm/environments/RoomEnvironment.js');
+                THREE = threeMod;
+                OrbitControls = controlsMod.OrbitControls;
+                RoomEnvironment = envMod.RoomEnvironment;
+            } catch (err) {
+                statusEl.textContent = '3D LOAD FAILED';
+                statusEl.style.color = 'rgba(255, 120, 120, 0.9)';
+                statusEl.style.letterSpacing = '1px';
+                statusEl.textContent = '3D LOAD FAILED - Check browser console';
+                console.error('Three.js load failed', err);
+                return;
+            }
 
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0b0f1c);
+            const canvas = document.getElementById('scene');
+            const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+            if (!gl) {
+                statusEl.textContent = 'WEBGL NOT AVAILABLE';
+                statusEl.style.color = 'rgba(255, 120, 120, 0.9)';
+                return;
+            }
 
-        const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 100);
-        camera.position.set(0, 1.6, 5);
+            const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.outputColorSpace = THREE.SRGBColorSpace;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.35;
+            renderer.setClearColor(0x0b0f1c, 1);
 
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.08;
-        controls.minDistance = 2.6;
-        controls.maxDistance = 7;
-        controls.target.set(0, 1.3, 0);
-        controls.update();
+            const scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0b0f1c);
 
-        const pmrem = new THREE.PMREMGenerator(renderer);
-        const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-        scene.environment = env;
+            const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(0, 1.6, 5);
 
-        const ambient = new THREE.AmbientLight(0xffffff, 0.6);
-        scene.add(ambient);
+            const controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.08;
+            controls.minDistance = 2.6;
+            controls.maxDistance = 7;
+            controls.target.set(0, 1.3, 0);
+            controls.update();
 
-        const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
-        keyLight.position.set(2.5, 4, 3);
-        scene.add(keyLight);
+            const pmrem = new THREE.PMREMGenerator(renderer);
+            const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+            scene.environment = env;
 
-        const fillLight = new THREE.DirectionalLight(0x88ccff, 0.8);
-        fillLight.position.set(-2, 3, 2);
-        scene.add(fillLight);
+            const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambient);
 
-        const rimLight = new THREE.PointLight(0x00e5e5, 1.2, 10);
-        rimLight.position.set(0, 2, -3);
-        scene.add(rimLight);
+            const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
+            keyLight.position.set(2.5, 4, 3);
+            scene.add(keyLight);
 
-        const floorMat = new THREE.MeshStandardMaterial({
-            color: 0x101622,
-            roughness: 0.8,
-            metalness: 0.1
-        });
-        const floor = new THREE.Mesh(new THREE.CircleGeometry(6, 64), floorMat);
-        floor.rotation.x = -Math.PI / 2;
-        floor.position.y = 0;
-        scene.add(floor);
+            const fillLight = new THREE.DirectionalLight(0x88ccff, 0.8);
+            fillLight.position.set(-2, 3, 2);
+            scene.add(fillLight);
+
+            const rimLight = new THREE.PointLight(0x00e5e5, 1.2, 10);
+            rimLight.position.set(0, 2, -3);
+            scene.add(rimLight);
+
+            const floorMat = new THREE.MeshStandardMaterial({
+                color: 0x101622,
+                roughness: 0.8,
+                metalness: 0.1
+            });
+            const floor = new THREE.Mesh(new THREE.CircleGeometry(6, 64), floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.y = 0;
+            scene.add(floor);
 
         const skinMat = new THREE.MeshPhysicalMaterial({
             color: 0xffd8c2,
@@ -205,22 +237,22 @@
             clearcoatRoughness: 0.2
         });
 
-        const body = new THREE.Group();
-        body.scale.set(1.2, 1.2, 1.2);
-        body.position.y = 0.1;
-        scene.add(body);
+            const body = new THREE.Group();
+            body.scale.set(1.2, 1.2, 1.2);
+            body.position.y = 0.1;
+            scene.add(body);
 
-        const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 64, 64), skinMat);
-        head.position.y = 1.7;
-        body.add(head);
+            const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 64, 64), skinMat);
+            head.position.y = 1.7;
+            body.add(head);
 
         // Debug helper (subtle) to ensure visibility
-        const debugSphere = new THREE.Mesh(
-            new THREE.SphereGeometry(0.06, 16, 16),
-            new THREE.MeshStandardMaterial({ color: 0x00e5e5, emissive: 0x00e5e5, emissiveIntensity: 0.6 })
-        );
-        debugSphere.position.set(0, 2.2, 0.3);
-        body.add(debugSphere);
+            const debugSphere = new THREE.Mesh(
+                new THREE.SphereGeometry(0.06, 16, 16),
+                new THREE.MeshStandardMaterial({ color: 0x00e5e5, emissive: 0x00e5e5, emissiveIntensity: 0.6 })
+            );
+            debugSphere.position.set(0, 2.2, 0.3);
+            body.add(debugSphere);
 
         const hair = new THREE.Mesh(new THREE.SphereGeometry(0.3, 64, 64, 0, Math.PI * 2, 0, Math.PI * 0.55), hairMat);
         hair.position.y = 1.76;
@@ -285,73 +317,77 @@
         ponyRight.rotation.z = -0.9;
         body.add(ponyRight);
 
-        const floating = document.getElementById('floating');
-        const sparkChars = ['*', '+', '.', 'o'];
-        window.addEventListener('click', (event) => {
-            const spark = document.createElement('div');
-            spark.className = 'spark';
-            spark.textContent = sparkChars[Math.floor(Math.random() * sparkChars.length)];
-            spark.style.left = `${event.clientX}px`;
-            spark.style.top = `${event.clientY}px`;
-            floating.appendChild(spark);
-            setTimeout(() => spark.remove(), 1400);
-        });
+            const floating = document.getElementById('floating');
+            const sparkChars = ['*', '+', '.', 'o'];
+            window.addEventListener('click', (event) => {
+                const spark = document.createElement('div');
+                spark.className = 'spark';
+                spark.textContent = sparkChars[Math.floor(Math.random() * sparkChars.length)];
+                spark.style.left = `${event.clientX}px`;
+                spark.style.top = `${event.clientY}px`;
+                floating.appendChild(spark);
+                setTimeout(() => spark.remove(), 1400);
+            });
 
-        let mode = 'idle';
-        const danceBtn = document.getElementById('danceBtn');
-        const idleBtn = document.getElementById('idleBtn');
-        const spinBtn = document.getElementById('spinBtn');
+            let mode = 'idle';
+            const danceBtn = document.getElementById('danceBtn');
+            const idleBtn = document.getElementById('idleBtn');
+            const spinBtn = document.getElementById('spinBtn');
 
-        function setMode(newMode) {
-            mode = newMode;
-            danceBtn.classList.toggle('active', mode === 'dance');
-            idleBtn.classList.toggle('active', mode === 'idle');
-            spinBtn.classList.toggle('active', mode === 'spin');
-        }
-
-        danceBtn.addEventListener('click', () => setMode('dance'));
-        idleBtn.addEventListener('click', () => setMode('idle'));
-        spinBtn.addEventListener('click', () => setMode('spin'));
-
-        setMode('idle');
-
-        const clock = new THREE.Clock();
-        function animate() {
-            requestAnimationFrame(animate);
-            const t = clock.getElapsedTime();
-
-            if (mode === 'dance') {
-                body.position.y = 0.05 + Math.sin(t * 4) * 0.03;
-                body.rotation.y = Math.sin(t * 2) * 0.2;
-                leftArm.rotation.z = 0.4 + Math.sin(t * 6) * 0.4;
-                rightArm.rotation.z = -0.4 + Math.sin(t * 6 + 1) * 0.4;
-                ponyLeft.rotation.z = 0.8 + Math.sin(t * 6) * 0.2;
-                ponyRight.rotation.z = -0.8 + Math.sin(t * 6 + 1) * 0.2;
-            } else if (mode === 'spin') {
-                body.rotation.y += 0.01;
-                body.position.y = 0.02 + Math.sin(t * 2) * 0.01;
-            } else {
-                body.position.y = 0.02 + Math.sin(t * 2) * 0.01;
-                body.rotation.y = Math.sin(t) * 0.05;
-                leftArm.rotation.z = 0.25 + Math.sin(t * 2) * 0.05;
-                rightArm.rotation.z = -0.25 + Math.sin(t * 2) * 0.05;
-                ponyLeft.rotation.z = 0.9 + Math.sin(t * 2) * 0.05;
-                ponyRight.rotation.z = -0.9 + Math.sin(t * 2 + 0.5) * 0.05;
+            function setMode(newMode) {
+                mode = newMode;
+                danceBtn.classList.toggle('active', mode === 'dance');
+                idleBtn.classList.toggle('active', mode === 'idle');
+                spinBtn.classList.toggle('active', mode === 'spin');
             }
 
-            head.rotation.y = Math.sin(t * 0.8) * 0.08;
-            head.rotation.x = Math.sin(t * 0.6) * 0.04;
+            danceBtn.addEventListener('click', () => setMode('dance'));
+            idleBtn.addEventListener('click', () => setMode('idle'));
+            spinBtn.addEventListener('click', () => setMode('spin'));
 
-            controls.update();
-            renderer.render(scene, camera);
+            setMode('idle');
+
+            const clock = new THREE.Clock();
+            function animate() {
+                requestAnimationFrame(animate);
+                const t = clock.getElapsedTime();
+
+                if (mode === 'dance') {
+                    body.position.y = 0.05 + Math.sin(t * 4) * 0.03;
+                    body.rotation.y = Math.sin(t * 2) * 0.2;
+                    leftArm.rotation.z = 0.4 + Math.sin(t * 6) * 0.4;
+                    rightArm.rotation.z = -0.4 + Math.sin(t * 6 + 1) * 0.4;
+                    ponyLeft.rotation.z = 0.8 + Math.sin(t * 6) * 0.2;
+                    ponyRight.rotation.z = -0.8 + Math.sin(t * 6 + 1) * 0.2;
+                } else if (mode === 'spin') {
+                    body.rotation.y += 0.01;
+                    body.position.y = 0.02 + Math.sin(t * 2) * 0.01;
+                } else {
+                    body.position.y = 0.02 + Math.sin(t * 2) * 0.01;
+                    body.rotation.y = Math.sin(t) * 0.05;
+                    leftArm.rotation.z = 0.25 + Math.sin(t * 2) * 0.05;
+                    rightArm.rotation.z = -0.25 + Math.sin(t * 2) * 0.05;
+                    ponyLeft.rotation.z = 0.9 + Math.sin(t * 2) * 0.05;
+                    ponyRight.rotation.z = -0.9 + Math.sin(t * 2 + 0.5) * 0.05;
+                }
+
+                head.rotation.y = Math.sin(t * 0.8) * 0.08;
+                head.rotation.x = Math.sin(t * 0.6) * 0.04;
+
+                controls.update();
+                renderer.render(scene, camera);
+            }
+            animate();
+            statusEl.textContent = '3D READY';
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
         }
-        animate();
 
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
+        initScene();
     </script>
 </body>
 </html>
