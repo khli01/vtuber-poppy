@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poppy - Interactive VTuber</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite ease-in-out;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .stage {
+            position: relative;
+            width: 400px;
+            height: 500px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        /* VTuber Character */
+        .vtuber {
+            position: relative;
+            width: 300px;
+            height: 450px;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+
+        .vtuber.dancing {
+            animation: dance 0.5s infinite ease-in-out;
+        }
+
+        @keyframes dance {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-15px) rotate(-3deg); }
+            50% { transform: translateY(0) rotate(0deg); }
+            75% { transform: translateY(-15px) rotate(3deg); }
+        }
+
+        /* Head */
+        .head {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 140px;
+            height: 160px;
+            background: linear-gradient(180deg, #ffecd2 0%, #fcb69f 100%);
+            border-radius: 70px 70px 60px 60px;
+            z-index: 10;
+        }
+
+        /* Hair */
+        .hair {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 180px;
+            height: 200px;
+            background: linear-gradient(180deg, #ff6b9d 0%, #c44569 100%);
+            border-radius: 90px 90px 40px 40px;
+            z-index: 5;
+        }
+
+        .hair::before {
+            content: '';
+            position: absolute;
+            bottom: -60px;
+            left: -20px;
+            width: 60px;
+            height: 150px;
+            background: linear-gradient(180deg, #ff6b9d 0%, #c44569 100%);
+            border-radius: 30px;
+            transform: rotate(-10deg);
+        }
+
+        .hair::after {
+            content: '';
+            position: absolute;
+            bottom: -60px;
+            right: -20px;
+            width: 60px;
+            height: 150px;
+            background: linear-gradient(180deg, #ff6b9d 0%, #c44569 100%);
+            border-radius: 30px;
+            transform: rotate(10deg);
+        }
+
+        /* Bangs */
+        .bangs {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 60px;
+            background: linear-gradient(180deg, #ff6b9d 0%, #c44569 100%);
+            border-radius: 0 0 75px 75px;
+            z-index: 15;
+        }
+
+        /* Eyes */
+        .eyes {
+            position: absolute;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 20;
+        }
+
+        .eye {
+            width: 35px;
+            height: 40px;
+            background: white;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pupil {
+            position: absolute;
+            width: 20px;
+            height: 24px;
+            background: linear-gradient(180deg, #6c5ce7 0%, #a29bfe 100%);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.1s ease;
+        }
+
+        .pupil::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            top: 5px;
+            right: 3px;
+        }
+
+        .vtuber.blink .eye {
+            height: 5px;
+        }
+
+        /* Mouth */
+        .mouth {
+            position: absolute;
+            top: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 10px;
+            background: #ff6b9d;
+            border-radius: 0 0 20px 20px;
+            z-index: 20;
+            transition: all 0.2s ease;
+        }
+
+        .vtuber.happy .mouth {
+            width: 30px;
+            height: 15px;
+            border-radius: 0 0 30px 30px;
+        }
+
+        .vtuber.talking .mouth {
+            animation: talk 0.15s infinite;
+        }
+
+        @keyframes talk {
+            0%, 100% { height: 10px; }
+            50% { height: 20px; border-radius: 50%; }
+        }
+
+        /* Blush */
+        .blush {
+            position: absolute;
+            top: 100px;
+            width: 25px;
+            height: 12px;
+            background: rgba(255, 107, 157, 0.5);
+            border-radius: 50%;
+            z-index: 18;
+        }
+
+        .blush.left { left: 25px; }
+        .blush.right { right: 25px; }
+
+        /* Body */
+        .body {
+            position: absolute;
+            top: 150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 180px;
+            background: linear-gradient(180deg, #ff9a9e 0%, #fad0c4 100%);
+            border-radius: 60px 60px 40px 40px;
+            z-index: 3;
+        }
+
+        /* Dress */
+        .dress {
+            position: absolute;
+            top: 200px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 160px;
+            height: 200px;
+            background: linear-gradient(180deg, #a29bfe 0%, #6c5ce7 100%);
+            border-radius: 20px 20px 80px 80px;
+            z-index: 2;
+        }
+
+        .dress::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 180px;
+            height: 60px;
+            background: linear-gradient(180deg, #dfe6e9 0%, #b2bec3 100%);
+            border-radius: 0 0 90px 90px;
+        }
+
+        /* Arms */
+        .arm {
+            position: absolute;
+            top: 170px;
+            width: 30px;
+            height: 120px;
+            background: linear-gradient(180deg, #ffecd2 0%, #fcb69f 100%);
+            border-radius: 15px;
+            z-index: 4;
+            transform-origin: top center;
+        }
+
+        .arm.left {
+            left: 70px;
+            animation: waveLeft 1s infinite ease-in-out;
+        }
+
+        .arm.right {
+            right: 70px;
+            animation: waveRight 1s infinite ease-in-out;
+        }
+
+        @keyframes waveLeft {
+            0%, 100% { transform: rotate(-20deg); }
+            50% { transform: rotate(-40deg); }
+        }
+
+        @keyframes waveRight {
+            0%, 100% { transform: rotate(20deg); }
+            50% { transform: rotate(40deg); }
+        }
+
+        .vtuber.dancing .arm.left {
+            animation: danceArmLeft 0.5s infinite ease-in-out;
+        }
+
+        .vtuber.dancing .arm.right {
+            animation: danceArmRight 0.5s infinite ease-in-out;
+        }
+
+        @keyframes danceArmLeft {
+            0%, 100% { transform: rotate(-30deg); }
+            50% { transform: rotate(-60deg); }
+        }
+
+        @keyframes danceArmRight {
+            0%, 100% { transform: rotate(30deg); }
+            50% { transform: rotate(60deg); }
+        }
+
+        /* Legs */
+        .legs {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 1;
+        }
+
+        .leg {
+            width: 35px;
+            height: 80px;
+            background: linear-gradient(180deg, #ffecd2 0%, #fcb69f 100%);
+            border-radius: 20px;
+        }
+
+        /* Accessories */
+        .cat-ears {
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 160px;
+            display: flex;
+            justify-content: space-between;
+            z-index: 25;
+        }
+
+        .ear {
+            width: 0;
+            height: 0;
+            border-left: 25px solid transparent;
+            border-right: 25px solid transparent;
+            border-bottom: 50px solid #ff6b9d;
+        }
+
+        .ear::after {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-bottom: 25px solid #ffd1dc;
+        }
+
+        /* Hearts floating effect */
+        .hearts-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .floating-heart {
+            position: absolute;
+            font-size: 24px;
+            animation: floatUp 2s ease-out forwards;
+            opacity: 0;
+        }
+
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(0.5); }
+            100% { opacity: 0; transform: translateY(-200px) scale(1.5); }
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Quicksand', sans-serif;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-dance {
+            background: linear-gradient(135deg, #ff6b9d 0%, #c44569 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.4);
+        }
+
+        .btn-dance:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(255, 107, 157, 0.6);
+        }
+
+        .btn-dance.active {
+            background: linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%);
+            box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4);
+        }
+
+        .btn-music {
+            background: linear-gradient(135deg, #a29bfe 0%, #6c5ce7 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(162, 155, 254, 0.4);
+        }
+
+        .btn-music:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(162, 155, 254, 0.6);
+        }
+
+        /* Speech bubble */
+        .speech-bubble {
+            position: absolute;
+            top: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 15px 25px;
+            border-radius: 20px;
+            font-size: 16px;
+            color: #333;
+            opacity: 0;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            z-index: 200;
+        }
+
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 15px solid white;
+        }
+
+        .speech-bubble.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(-10px);
+        }
+
+        /* Name tag */
+        .name-tag {
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 0 20px rgba(255, 107, 157, 0.8);
+            margin-top: 10px;
+        }
+
+        .name-tag span {
+            background: linear-gradient(135deg, #ff6b9d 0%, #fad0c4 50%, #a29bfe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Mood indicator */
+        .mood {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 5px;
+        }
+
+        /* Audio visualizer */
+        .visualizer {
+            position: absolute;
+            bottom: -50px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 5px;
+            height: 40px;
+            align-items: flex-end;
+        }
+
+        .bar {
+            width: 8px;
+            background: linear-gradient(180deg, #ff6b9d 0%, #a29bfe 100%);
+            border-radius: 4px;
+            transition: height 0.1s ease;
+        }
+
+        /* Sparkle effect */
+        .sparkle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .sparkle.show {
+            animation: sparkle 0.6s ease-out forwards;
+        }
+
+        @keyframes sparkle {
+            0% { opacity: 1; transform: scale(0); }
+            50% { opacity: 1; transform: scale(1.5); }
+            100% { opacity: 0; transform: scale(0); }
+        }
+
+        /* Footer */
+        .footer {
+            position: fixed;
+            bottom: 20px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    <div class="hearts-container" id="hearts"></div>
+
+    <div class="container">
+        <div class="stage">
+            <div class="speech-bubble" id="speech"></div>
+            
+            <div class="vtuber" id="vtuber">
+                <!-- Cat ears -->
+                <div class="cat-ears">
+                    <div class="ear"></div>
+                    <div class="ear"></div>
+                </div>
+                
+                <!-- Hair -->
+                <div class="hair"></div>
+                <div class="bangs"></div>
+                
+                <!-- Head -->
+                <div class="head">
+                    <!-- Eyes -->
+                    <div class="eyes">
+                        <div class="eye">
+                            <div class="pupil" id="pupil-left"></div>
+                        </div>
+                        <div class="eye">
+                            <div class="pupil" id="pupil-right"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Blush -->
+                    <div class="blush left"></div>
+                    <div class="blush right"></div>
+                    
+                    <!-- Mouth -->
+                    <div class="mouth"></div>
+                </div>
+                
+                <!-- Body -->
+                <div class="body"></div>
+                <div class="dress"></div>
+                
+                <!-- Arms -->
+                <div class="arm left"></div>
+                <div class="arm right"></div>
+                
+                <!-- Legs -->
+                <div class="legs">
+                    <div class="leg"></div>
+                    <div class="leg"></div>
+                </div>
+            </div>
+
+            <div class="visualizer" id="visualizer"></div>
+        </div>
+
+        <h1 class="name-tag"><span>✨ Poppy ✨</span></h1>
+        <p class="mood" id="mood">Mood: Happy & Ready to Play!</p>
+
+        <div class="controls">
+            <button class="btn btn-dance" id="danceBtn">💃 Dance</button>
+            <button class="btn btn-music" id="musicBtn">🎵 Music</button>
+        </div>
+    </div>
+
+    <div class="footer">Click on Poppy to interact! Move your mouse to make her eyes follow you.</div>
+
+    <script>
+        // Create stars
+        const starsContainer = document.getElementById('stars');
+        for (let i = 0; i < 100; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.width = Math.random() * 3 + 1 + 'px';
+            star.style.height = star.style.width;
+            star.style.animationDelay = Math.random() * 2 + 's';
+            starsContainer.appendChild(star);
+        }
+
+        // Create visualizer bars
+        const visualizer = document.getElementById('visualizer');
+        for (let i = 0; i < 12; i++) {
+            const bar = document.createElement('div');
+            bar.className = 'bar';
+            bar.style.height = '5px';
+            visualizer.appendChild(bar);
+        }
+
+        const vtuber = document.getElementById('vtuber');
+        const speech = document.getElementById('speech');
+        const mood = document.getElementById('mood');
+        const heartsContainer = document.getElementById('hearts');
+        const danceBtn = document.getElementById('danceBtn');
+        const musicBtn = document.getElementById('musicBtn');
+        const pupilLeft = document.getElementById('pupil-left');
+        const pupilRight = document.getElementById('pupil-right');
+        const bars = document.querySelectorAll('.bar');
+
+        let isDancing = false;
+        let isPlaying = false;
+        let audioContext = null;
+        let clickCount = 0;
+
+        const phrases = [
+            "Hi there! ✨",
+            "Nya~ 💕",
+            "Let's have fun!",
+            "You're so nice!",
+            "Hehe~ 😊",
+            "Dance with me!",
+            "I love you! 💖",
+            "*happy noises*",
+            "Sugoi~!",
+            "Pat pat? 🥺"
+        ];
+
+        const moods = [
+            "Mood: Happy & Ready to Play!",
+            "Mood: Excited! ✨",
+            "Mood: Feeling Loved 💕",
+            "Mood: Energetic!",
+            "Mood: Super Happy!"
+        ];
+
+        // Eye tracking
+        document.addEventListener('mousemove', (e) => {
+            const rect = vtuber.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + 100; // Approximate eye position
+
+            const deltaX = (e.clientX - centerX) / 50;
+            const deltaY = (e.clientY - centerY) / 50;
+
+            const clampedX = Math.max(-5, Math.min(5, deltaX));
+            const clampedY = Math.max(-5, Math.min(5, deltaY));
+
+            pupilLeft.style.transform = `translate(calc(-50% + ${clampedX}px), calc(-50% + ${clampedY}px))`;
+            pupilRight.style.transform = `translate(calc(-50% + ${clampedX}px), calc(-50% + ${clampedY}px))`;
+        });
+
+        // Click interaction
+        vtuber.addEventListener('click', (e) => {
+            clickCount++;
+            
+            // Show speech bubble
+            speech.textContent = phrases[Math.floor(Math.random() * phrases.length)];
+            speech.classList.add('show');
+            setTimeout(() => speech.classList.remove('show'), 2000);
+
+            // Happy expression
+            vtuber.classList.add('happy');
+            setTimeout(() => vtuber.classList.remove('happy'), 500);
+
+            // Blink
+            vtuber.classList.add('blink');
+            setTimeout(() => vtuber.classList.remove('blink'), 150);
+
+            // Create floating heart
+            createHeart(e.clientX, e.clientY);
+
+            // Create sparkle
+            createSparkle(e.clientX, e.clientY);
+
+            // Update mood occasionally
+            if (clickCount % 3 === 0) {
+                mood.textContent = moods[Math.floor(Math.random() * moods.length)];
+            }
+        });
+
+        function createHeart(x, y) {
+            const heart = document.createElement('div');
+            heart.className = 'floating-heart';
+            heart.innerHTML = ['💖', '💕', '💗', '✨', '💫'][Math.floor(Math.random() * 5)];
+            heart.style.left = x + 'px';
+            heart.style.top = y + 'px';
+            heartsContainer.appendChild(heart);
+            setTimeout(() => heart.remove(), 2000);
+        }
+
+        function createSparkle(x, y) {
+            for (let i = 0; i < 5; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle show';
+                sparkle.style.left = (x + (Math.random() - 0.5) * 60) + 'px';
+                sparkle.style.top = (y + (Math.random() - 0.5) * 60) + 'px';
+                document.body.appendChild(sparkle);
+                setTimeout(() => sparkle.remove(), 600);
+            }
+        }
+
+        // Dance button
+        danceBtn.addEventListener('click', () => {
+            isDancing = !isDancing;
+            if (isDancing) {
+                vtuber.classList.add('dancing');
+                danceBtn.classList.add('active');
+                danceBtn.textContent = '⏹ Stop';
+                speech.textContent = "Let's dance! 💃";
+                speech.classList.add('show');
+                setTimeout(() => speech.classList.remove('show'), 2000);
+            } else {
+                vtuber.classList.remove('dancing');
+                danceBtn.classList.remove('active');
+                danceBtn.textContent = '💃 Dance';
+            }
+        });
+
+        // Music button (simulated visualizer)
+        musicBtn.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                musicBtn.textContent = '🔇 Stop';
+                animateVisualizer();
+                speech.textContent = "🎵 Music time!";
+                speech.classList.add('show');
+                vtuber.classList.add('talking');
+                setTimeout(() => {
+                    speech.classList.remove('show');
+                    vtuber.classList.remove('talking');
+                }, 2000);
+            } else {
+                musicBtn.textContent = '🎵 Music';
+                bars.forEach(bar => bar.style.height = '5px');
+                vtuber.classList.remove('talking');
+            }
+        });
+
+        function animateVisualizer() {
+            if (!isPlaying) return;
+            bars.forEach(bar => {
+                bar.style.height = (Math.random() * 35 + 5) + 'px';
+            });
+            requestAnimationFrame(() => setTimeout(animateVisualizer, 100));
+        }
+
+        // Random blinking
+        setInterval(() => {
+            if (Math.random() > 0.7) {
+                vtuber.classList.add('blink');
+                setTimeout(() => vtuber.classList.remove('blink'), 150);
+            }
+        }, 3000);
+
+        // Random idle animations
+        setInterval(() => {
+            if (!isDancing && Math.random() > 0.8) {
+                const idleMessages = ["...", "♪", "~", "?"];
+                speech.textContent = idleMessages[Math.floor(Math.random() * idleMessages.length)];
+                speech.classList.add('show');
+                setTimeout(() => speech.classList.remove('show'), 1500);
+            }
+        }, 8000);
+    </script>
+</body>
+</html>
