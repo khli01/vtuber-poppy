@@ -130,12 +130,13 @@
         import { RoomEnvironment } from 'https://unpkg.com/three@0.161.0/examples/jsm/environments/RoomEnvironment.js';
 
         const canvas = document.getElementById('scene');
-        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 1.1;
+        renderer.toneMappingExposure = 1.35;
+        renderer.setClearColor(0x0b0f1c, 1);
 
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x0b0f1c);
@@ -154,6 +155,9 @@
         const pmrem = new THREE.PMREMGenerator(renderer);
         const env = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
         scene.environment = env;
+
+        const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambient);
 
         const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
         keyLight.position.set(2.5, 4, 3);
@@ -202,11 +206,21 @@
         });
 
         const body = new THREE.Group();
+        body.scale.set(1.2, 1.2, 1.2);
+        body.position.y = 0.1;
         scene.add(body);
 
         const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 64, 64), skinMat);
         head.position.y = 1.7;
         body.add(head);
+
+        // Debug helper (subtle) to ensure visibility
+        const debugSphere = new THREE.Mesh(
+            new THREE.SphereGeometry(0.06, 16, 16),
+            new THREE.MeshStandardMaterial({ color: 0x00e5e5, emissive: 0x00e5e5, emissiveIntensity: 0.6 })
+        );
+        debugSphere.position.set(0, 2.2, 0.3);
+        body.add(debugSphere);
 
         const hair = new THREE.Mesh(new THREE.SphereGeometry(0.3, 64, 64, 0, Math.PI * 2, 0, Math.PI * 0.55), hairMat);
         hair.position.y = 1.76;
